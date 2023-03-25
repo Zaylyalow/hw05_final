@@ -301,7 +301,7 @@ class FollowViewsTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        
+
         cls.author = User.objects.create_user(username='testAuthor')
 
         cls.group = Group.objects.create(
