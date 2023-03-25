@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load thumbnail %}
+{% block title %}Записи сообщества:{{ group|lower }} {% endblock %}
+{% block content %}
+  <h1>{{ group }}</h1>
+  <p>{{ group.description }}</p>
+  {% for post in page_obj %}
+    {% include 'posts/includes/posts_content.html' with show_author=True show_group=False %} 
+  {% endfor %}
+  {% include 'posts/includes/paginator.html' %} 
+{% endblock %} 
