@@ -301,9 +301,8 @@ class FollowViewsTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        
         cls.author = User.objects.create_user(username='testAuthor')
-        cls.author_client = Client()
-        cls.author_client.force_login(cls.author)
 
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -332,7 +331,8 @@ class FollowViewsTests(TestCase):
         cls.FOLLOW_URL = reverse('posts:follow_index')
 
     def setUp(self):
-        self.guest_client = Client()
+        self.author_client = Client()
+        self.author_client.force_login(self.author)
         self.user = User.objects.create_user(username='testAuthorized')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
@@ -373,7 +373,7 @@ class FollowViewsTests(TestCase):
             f'/auth/login/?next=/profile/{self.author.username}/follow/'
         )
 
-        response = self.guest_client.post(
+        response = self.client.post(
             FollowViewsTests.PROFILE_FOLLOW_URL
         )
         self.assertEqual(Follow.objects.count(), 0)
