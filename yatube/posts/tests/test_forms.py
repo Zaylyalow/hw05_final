@@ -158,8 +158,7 @@ class CommentFormTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.author = User.objects.create_user(username='testAuthor')
-        cls.author_client = Client()
-        cls.author_client.force_login(cls.author)
+
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test',
@@ -180,7 +179,8 @@ class CommentFormTests(TestCase):
         )
 
     def setUp(self):
-        self.guest_client = Client()
+        self.author_client = Client()
+        self.author_client.force_login(self.author)
         self.user = User.objects.create_user(username='testAuthorized')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
@@ -212,7 +212,7 @@ class CommentFormTests(TestCase):
         )
         text = 'Комментарий гостя'
         comment_form_data = {'text': text}
-        comment_response = self.guest_client.post(
+        comment_response = self.client.post(
             CommentFormTests.COMMENT,
             data=comment_form_data,
             follow=True
