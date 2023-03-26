@@ -21,13 +21,6 @@ class PostURLTests(TestCase):
             author=cls.author,
             text='Длинное сообщение',
         )
-        cls.other_author = User.objects.create_user(username='OtherAuthor')
-        cls.other_author_client = Client()
-        cls.other_author_client.force_login(cls.other_author)
-        cls.other_post = Post.objects.create(
-            author=cls.other_author,
-            text='Длинное сообщение2',
-        )
 
         cls.INDEX = '/'
         cls.GROUP_POSTS = f'/group/{cls.group.slug}/'
@@ -38,6 +31,11 @@ class PostURLTests(TestCase):
         cls.EDIT = f'/posts/{cls.post.id}/edit/'
         cls.CREATE_REVERSE = '/auth/login/?next=/create/'
         cls.EDIT_REVERSE = f'/auth/login/?next=/posts/{cls.post.id}/edit/'
+        # added
+        cls.COMMENT = f'/posts/{cls.post.id}/comment/'
+        cls.FOLLOW_INDEX = '/follow/'
+        cls.FOLLOW = f'/profile/{cls.author.username}/follow/'
+        cls.UNFOLLOW = f'/profile/{cls.author.username}/unfollow/'
 
     def setUp(self):
         self.author_client = Client()
@@ -45,6 +43,9 @@ class PostURLTests(TestCase):
         self.user = User.objects.create_user(username='testAuthorized')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.other_author = User.objects.create_user(username='OtherAuthor')
+        self.other_author_client = Client()
+        self.other_author_client.force_login(self.other_author)
 
         self.public_urls = [
             (PostURLTests.INDEX, 'posts/index.html'),
@@ -56,11 +57,11 @@ class PostURLTests(TestCase):
         self.private_urls = [
             (PostURLTests.CREATE, 'posts/create_post.html'),
             (PostURLTests.EDIT, 'posts/create_post.html'),
+            (PostURLTests.FOLLOW_INDEX, 'posts/follow.html'),
         ]
 
     def test_existing_pages(self):
         """Проверка существования и доступности страниц любому пользователю."""
-
         for url, _ in self.public_urls:
             with self.subTest(url=url):
                 response = self.client.get(url)
@@ -107,15 +108,34 @@ class PostURLTests(TestCase):
     def test_post_edit_url_redirect_other_author_on_post_detail(self):
         """Проверка перенаправления другого автора со сраницы
         /posts/<int:post_id>/edit/ на страницу /posts/<int:post_id>/."""
+        self.other_post = Post.objects.create(
+            author=self.other_author,
+            text='Длинное сообщение2',
+        )
         response = self.other_author_client.get(PostURLTests.EDIT)
         self.assertRedirects(response, PostURLTests.POST_DETAIL)
 
     def test_accordance_urls_templates(self):
         """Проверка cоответствия адресов и шаблонов."""
-        for url, template in self.private_urls + self.private_urls:
+        for url, template in self.private_urls + self.public_urls:
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertTemplateUsed(
                     response,
                     template
                 )
+
+    def test_COMMENT_url_exists_at_desired_location(self):
+        """Проверка доступности адреса COMMEN."""
+        response = self.author_client.get(self.COMMENT)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_FOLLOW_url_exists_at_desired_location(self):
+        """Проверка доступности адреса FOLLOW."""
+        response = self.author_client.get(self.FOLLOW)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+
+    def test_UNFOLLOW_url_exists_at_desired_location(self):
+        """Проверка доступности адреса UNFOLLOW."""
+        response = self.author_client.get(self.UNFOLLOW)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
